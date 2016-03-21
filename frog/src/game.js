@@ -10,16 +10,6 @@ var sprites = {
   death: { sx: 0, sy: 143, w: 48, h: 48, frames: 4 }
 };
 
-var cars = {
-  '1': {sprite: 'car1'},
-  '2': {sprite: 'car2'},
-  '3': {sprite: 'car3'},
-  '4': {sprite: 'car4'},
-  '5': {sprite: 'car5'}
-};
-
-
-
 var OBJECT_PLAYER = 1,
     OBJECT_ENEMY = 2,
     OBJECT_TRUNK = 4,
@@ -32,21 +22,6 @@ var startGame = function() {
                                   playGame));
 };
 
-/*var level1 = [
- // Start,   End, Gap,  Type,   Override
-  [ 0,      4000,  500, 'step' ],
-  [ 6000,   13000, 800, 'ltr' ],
-  [ 10000,  16000, 400, 'circle' ],
-  [ 17800,  20000, 500, 'straight', { x: 50 } ],
-  [ 18200,  20000, 500, 'straight', { x: 90 } ],
-  [ 18200,  20000, 500, 'straight', { x: 10 } ],
-  [ 22000,  25000, 400, 'wiggle', { x: 150 }],
-  [ 22000,  25000, 400, 'wiggle', { x: 100 }]
-];*/
-
-
-
-
 var playGame = function() {
 	var base = new GameBoard();
   var board = new GameBoard();
@@ -55,15 +30,16 @@ var playGame = function() {
 
   board.add(new home());
 
-  board.add(new spawnerCar(new car('car1',0, Game.height/2, 60),2,board));
-  board.add(new spawnerCar(new car('car2',0, Game.height/2+48, 60),3, board));
-  board.add(new spawnerCar(new car('car3',0, Game.height/2+(48*2), 60),3, board));
-  board.add(new spawnerCar(new car('car4',0, Game.height/2+(48*3), 60),2, board));
+  board.add(new spawner(new car('car1',0, Game.height/2, 70), 3, board, true));
+  board.add(new spawner(new car('car2',Game.width, Game.height/2+48, -60), 4, board, true));
+  board.add(new spawner(new car('car3',0, Game.height/2+(48*2), 60), 4, board, true));
+  board.add(new spawner(new car('car4',Game.width, Game.height/2+(48*3), -70), 3, board, true));
 
   board.add(new water(rana));
-  board.add(new log('trunk',0, Game.height/2-(48*2), 0.1, rana))
-  board.add(new log('trunk',Game.width, Game.height/2-(48*3), -0.1, rana))
-  board.add(new log('trunk',0, Game.height/2-(48*4), 0.1, rana))
+
+  board.add(new spawner(new log('trunk',0, Game.height/2-(48*2), 50, rana), 5, board, false));
+  board.add(new spawner(new log('trunk',Game.width, Game.height/2-(48*3), -50, rana), 5, board, false));
+  board.add(new spawner(new log('trunk',0, Game.height/2-(48*4), 50, rana), 5, board, false));
   board.add(rana);
   Game.setBoard(2,base);
   Game.setBoard(3,board);
@@ -91,38 +67,45 @@ var loseGame = function() {
                                   playGame));
 };
 
-var spawnerCar = function(coche,frecuency, board) {
-	this.setup(coche.sprite, { vx: 0, reloadTime: 0.75});
-  	this.x = coche.x;
-  	this.y = coche.y;
-  	this.vel = coche.vel;
+var spawner = function(obj,frecuency, board, bool) {
+	this.setup(obj.sprite, { vx: 0, reloadTime: 0.75});
+  	this.x = obj.x;
+  	this.y = obj.y;
+  	this.vel = obj.vel;
   	this.b = board;
-  	this.b.add(new car(coche.sprite, this.x-this.w, this.y, this.vel));
+  	this.b.add(new car(obj.sprite, this.x-this.w, this.y, this.vel));
 	this.f = frecuency;
 	this.time = 0;
-	/*this.spaceCars = [
-	{y:Game.height/2, x:Game.width, vel:-1},
-	{y:Game.height/2+48, x:-48, vel:1},
-	{y:Game.height/2+(48*2), x:Game.width, vel:-1},
-	{y:Game.height/2+(48*3), x:-48, vel:1}
-	];*/
+	this.bool = bool;
+	this.obj = obj;
 	this.draw = function(dt){};
 };
-spawnerCar.prototype = new Sprite();
-spawnerCar.prototype.step = function(dt){
+spawner.prototype = new Sprite();
+spawner.prototype.step = function(dt){
 	this.time += dt;
 
 	if(this.time >= this.f){
-		var c = Math.floor(Math.random() * (5))+1;
-		//var space = Math.floor(Math.random() * (3))+1;
-		var cochecito = 'car'+c;
-		//var espacio = this.spaceCars[space];
-		this.b.add(new car(cochecito, this.x-this.w, this.y, this.vel));
+		var cochecito = 'trunk';
+		if(this.bool){
+			var c = Math.floor(Math.random() * (5))+1;
+			cochecito = 'car'+c;
+		}
+		var posInicio;
+		if(this.x == Game.width){
+			posInicio = this.x + this.w;
+		}
+		if(this.x == 0){
+			posInicio = this.x - this.w;
+		}
+		this.setup(cochecito, { vx: 0, reloadTime: 0.75});
+		this.b.add(new car(cochecito, posInicio, this.y, this.vel));
 		this.time = 0;
 	}
-	
-
 };
+
+spawner.prototype.hit = function(){
+	this.obj.hit();
+}
 
 var water = function(rana){
   this.x =0;
@@ -278,7 +261,7 @@ car.prototype.step = function(dt) {
   }
 };
 
-car.prototype.hit = function(damage) {
+car.prototype.hit = function() {
  // this.health -= damage;
   //if(this.health <=0) {
   if(this.board.remove(this)){

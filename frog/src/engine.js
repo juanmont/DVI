@@ -205,6 +205,13 @@ var GameBoard = function() {
     return obj; 
   };
 
+  this.addInitial = function(obj) { 
+    obj.board=this; 
+    this.objects.unshift(obj); 
+    this.cnt[obj.type] = (this.cnt[obj.type] || 0) + 1;
+    return obj; 
+  };
+
   // Mark an object for removal
   this.remove = function(obj) { 
     var idx = this.removed.indexOf(obj);

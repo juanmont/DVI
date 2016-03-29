@@ -30,16 +30,16 @@ var playGame = function() {
 
   board.add(new home());
 
-  board.add(new CarSpawner(new car('car1',0, Game.height/2, 70), 3));
+  board.add(new CarSpawner(new car('car1',-48, Game.height/2, 70), 3));
   board.add(new CarSpawner(new car('car2',Game.width, Game.height/2+48, -60), 4));
-  board.add(new CarSpawner(new car('car3',0, Game.height/2+(48*2), 60), 4));
+  board.add(new CarSpawner(new car('car3',-96, Game.height/2+(48*2), 60), 4));
   board.add(new CarSpawner(new car('car4',Game.width, Game.height/2+(48*3), -70), 3));
 
   board.add(new water(rana));
 
-  board.add(new LogSpawner(new log('trunk',0, Game.height/2-(48*2), 50, rana), 5));
-  board.add(new LogSpawner(new log('trunk',Game.width, Game.height/2-(48*3), -50, rana), 5));
-  board.add(new LogSpawner(new log('trunk',0, Game.height/2-(48*4), 50, rana), 5));
+  board.add(new LogSpawner(new log('trunk',-142, Game.height/2-(48*2), 50, rana), 5));
+  board.add(new LogSpawner(new log('trunk',Game.width, Game.height/2-(48*3), -55, rana), 4.5));
+  board.add(new LogSpawner(new log('trunk',-142, Game.height/2-(48*4), 60, rana), 6));
   board.add(rana);
   Game.setBoard(2,base);
   Game.setBoard(3,board);
@@ -66,58 +66,6 @@ var loseGame = function() {
                                   "Press space to play again",
                                   playGame));
 };
-
-/*var spawner = function(obj,frecuency, board, bool) {
-	//this.setup(obj.sprite, { vx: 0, reloadTime: 0.75});
-  this.x = obj.x;
-  this.y = obj.y;
-  this.vel = obj.vel;
-  this.b = board;
-  this.b.add(new car(obj.sprite, this.x-this.w, this.y, this.vel));
-	this.f = frecuency;
-	this.time = 0;
-	this.bool = bool;
-	this.obj = obj;
-	this.draw = function(dt){};
-};
-spawner.prototype = new Sprite();
-spawner.prototype.step = function(dt){
-	this.time += dt;
-
-	if(this.time >= this.f){
-		var cochecito = 'trunk';
-		if(this.bool){
-			var c = Math.floor(Math.random() * (5))+1;
-			cochecito = 'car'+c;
-		}
-		var posInicio;
-		if(this.x == Game.width){
-			posInicio = this.x + this.w;
-		}
-		if(this.x == 0){
-			posInicio = this.x - this.w;
-		}
-		this.setup(cochecito, { vx: 0, reloadTime: 0.75});
-		this.b.add(new car(cochecito, posInicio, this.y, this.vel));
-		this.time = 0;
-	}
-};
-
-spawner.prototype.hit = function(){
-	this.obj.hit();
-}
-
-var water = function(rana){
-  this.x =0;
-  this.y=48;
-  this.w=Game.width; 
-  this.h=48*3;
-  this.rana = rana;
-  this.draw = function(dt){};
-};*/
-
-
-
 var water = function(rana){
   this.x =0;
   this.y=48;
@@ -155,19 +103,15 @@ log.prototype = new Sprite();
 log.prototype.type = OBJECT_TRUNK;
 
 log.prototype.step = function(dt) {
-  /*this.vx += this.vel;//+ this.B * Math.sin(this.C * this.t + this.D);
-  //this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
-
-  this.x += this.vx * dt;*/
-  this.x += this.vel * dt;
-
+	this.vx = this.vel;
+ 	this.x += this.vx * dt;
   if(this.posInitial == 0){
     if(this.x > Game.width) { 
       this.board.remove(this); 
     }
   }
   else if(this.posInitial == Game.width){
-    if(this.x < 0) { 
+    if(this.x < (0-this.w)) { 
       this.board.remove(this);
     }
   }
@@ -195,6 +139,8 @@ frog.prototype.type = OBJECT_PLAYER;
 
 frog.prototype.step = function(dt) {
     this.time += dt;
+    this.x += this.vx * dt;
+
     if(this.time > 0.100){
       if(Game.keys['left']) { this.x -= this.w; }
       else if(Game.keys['right']) { this.x += this.w; }
@@ -203,9 +149,6 @@ frog.prototype.step = function(dt) {
          else { this.vx = 0; this.vy = 0 }
       this.time = 0;
     }
-    
-
-    this.x += this.vx * dt;
 
     if(this.x < 0 ) { this.x = 0; }
     else if(this.x > Game.width - this.w) { 
@@ -257,7 +200,8 @@ car.prototype.type = OBJECT_ENEMY;
 
 car.prototype.step = function(dt) {
 
-  this.x += this.vel * dt;
+  this.vx = this.vel;
+ 	this.x += this.vx * dt;
 
   if(this.posInitial == 0){
     if(this.x > Game.width) { 
@@ -265,7 +209,7 @@ car.prototype.step = function(dt) {
     }
   }
   else if(this.posInitial == Game.width){
-    if(this.x < -48) { 
+    if(this.x < (0-this.w)) { 
       this.board.remove(this);
     }
   }
@@ -338,7 +282,7 @@ Spawner.prototype.step = function(dt){
 
   if (this.time >= this.spawnerTime){
     this.time = 0;
-    this.board.add(this.getObj());
+    this.board.addInitial(this.getObj());
   }
 
 
@@ -359,7 +303,7 @@ var CarSpawner = function(prototype, time){
 CarSpawner.prototype = new Spawner();
 
 var LogSpawner = function(prototype, time){
-  this.spawn_time = time;
+  this.spawnerTime = time;
 
   this.getObj = function(){
     var tronco = new log(prototype.sprite,prototype.x, prototype.y, prototype.vel, prototype.ranita);

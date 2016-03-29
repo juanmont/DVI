@@ -30,16 +30,16 @@ var playGame = function() {
 
   board.add(new home());
 
-  board.add(new spawner(new car('car1',0, Game.height/2, 70), 3, board, true));
-  board.add(new spawner(new car('car2',Game.width, Game.height/2+48, -60), 4, board, true));
-  board.add(new spawner(new car('car3',0, Game.height/2+(48*2), 60), 4, board, true));
-  board.add(new spawner(new car('car4',Game.width, Game.height/2+(48*3), -70), 3, board, true));
+  board.add(new CarSpawner(new car('car1',0, Game.height/2, 70), 3));
+  board.add(new CarSpawner(new car('car2',Game.width, Game.height/2+48, -60), 4));
+  board.add(new CarSpawner(new car('car3',0, Game.height/2+(48*2), 60), 4));
+  board.add(new CarSpawner(new car('car4',Game.width, Game.height/2+(48*3), -70), 3));
 
   board.add(new water(rana));
 
-  board.add(new spawner(new log('trunk',0, Game.height/2-(48*2), 50, rana), 5, board, false));
-  board.add(new spawner(new log('trunk',Game.width, Game.height/2-(48*3), -50, rana), 5, board, false));
-  board.add(new spawner(new log('trunk',0, Game.height/2-(48*4), 50, rana), 5, board, false));
+  board.add(new LogSpawner(new log('trunk',0, Game.height/2-(48*2), 50, rana), 5));
+  board.add(new LogSpawner(new log('trunk',Game.width, Game.height/2-(48*3), -50, rana), 5));
+  board.add(new LogSpawner(new log('trunk',0, Game.height/2-(48*4), 50, rana), 5));
   board.add(rana);
   Game.setBoard(2,base);
   Game.setBoard(3,board);
@@ -67,13 +67,13 @@ var loseGame = function() {
                                   playGame));
 };
 
-var spawner = function(obj,frecuency, board, bool) {
-	this.setup(obj.sprite, { vx: 0, reloadTime: 0.75});
-  	this.x = obj.x;
-  	this.y = obj.y;
-  	this.vel = obj.vel;
-  	this.b = board;
-  	this.b.add(new car(obj.sprite, this.x-this.w, this.y, this.vel));
+/*var spawner = function(obj,frecuency, board, bool) {
+	//this.setup(obj.sprite, { vx: 0, reloadTime: 0.75});
+  this.x = obj.x;
+  this.y = obj.y;
+  this.vel = obj.vel;
+  this.b = board;
+  this.b.add(new car(obj.sprite, this.x-this.w, this.y, this.vel));
 	this.f = frecuency;
 	this.time = 0;
 	this.bool = bool;
@@ -114,8 +114,18 @@ var water = function(rana){
   this.h=48*3;
   this.rana = rana;
   this.draw = function(dt){};
-};
+};*/
 
+
+
+var water = function(rana){
+  this.x =0;
+  this.y=48;
+  this.w=Game.width; 
+  this.h=48*3;
+  this.rana = rana;
+  this.draw = function(dt){};
+};
 water.prototype = new Sprite();
 water.prototype.type = OBJECT_ENEMY;
 water.prototype.step = function(dt){
@@ -145,11 +155,11 @@ log.prototype = new Sprite();
 log.prototype.type = OBJECT_TRUNK;
 
 log.prototype.step = function(dt) {
-  this.vx += this.vel;//+ this.B * Math.sin(this.C * this.t + this.D);
+  /*this.vx += this.vel;//+ this.B * Math.sin(this.C * this.t + this.D);
   //this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
 
-  this.x += this.vx * dt;
-  
+  this.x += this.vx * dt;*/
+  this.x += this.vel * dt;
 
   if(this.posInitial == 0){
     if(this.x > Game.width) { 
@@ -315,6 +325,56 @@ home.prototype.hit = function(){
                                    this.y + this.h/2));
   }
 };
+
+
+var Spawner = function (){
+  this.time = 0;
+
+};
+
+Spawner.prototype.draw = function(){};
+Spawner.prototype.step = function(dt){
+  this.time += dt;
+
+  if (this.time >= this.spawnerTime){
+    this.time = 0;
+    this.board.add(this.getObj());
+  }
+
+
+};
+
+
+var CarSpawner = function(prototype, time){
+  this.spawnerTime = time;
+
+  this.getObj = function(){
+    var coche = new car(prototype.sprite,prototype.x, prototype.y, prototype.vel);
+    coche.type=prototype.type;
+    return coche;
+
+  };
+
+};
+CarSpawner.prototype = new Spawner();
+
+var LogSpawner = function(prototype, time){
+  this.spawn_time = time;
+
+  this.getObj = function(){
+    var tronco = new log(prototype.sprite,prototype.x, prototype.y, prototype.vel, prototype.ranita);
+
+    tronco.type=prototype.type;
+    /*tronco.x = prototype.x;
+    tronco.vel = prototype.vel;
+    tronco.y = prototype.y;*/
+
+    return tronco;
+  };
+
+};
+
+LogSpawner.prototype = new Spawner();
 
 window.addEventListener("load", function() {
   Game.initialize("game",sprites,startGame);

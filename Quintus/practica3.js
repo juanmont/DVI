@@ -5,13 +5,15 @@ window.addEventListener("load",function() {
 						width: 320, // Set the default width to 800 pixels
 						height: 480, // Set the default height to 600 pixels
 					})
-					.controls();//.touch();
+					.controls().touch();
 
 	Q.scene("level1", function(stage){
-		Q.stageTMX("level.tmx",stage);
-		//stage.add("viewport").centerOn(150, 380);
-		// Create the player and add them to the stage
+		Q.stageTMX("level2.tmx",stage);
+		
 		var player = stage.insert(new Q.Mario());
+		stage.insert(new Q.Goomba());
+		//stage.insert(new Q.Bloopa());
+		stage.insert(new Q.Princess());
 		// Give the stage a moveable viewport and tell it
 		// to follow the player.
 		stage.add("viewport").follow(player);
@@ -21,14 +23,64 @@ window.addEventListener("load",function() {
 
 	});
 
-	Q.loadTMX("level.tmx, mario_small.png, mario_small.json, tiles.png", function(){
+	Q.scene('endGame',function(stage) {
+	  var box = stage.insert(new Q.UI.Container({
+	    x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
+	  }));
+	  
+	  var button = box.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
+	                                           label: "Play Again" }))         
+	  var label = box.insert(new Q.UI.Text({x:10, y: -10 - button.p.h, 
+	                                        label: stage.options.label }));
+	  button.on("click",function() {
+	    Q.clearStages();
+	    Q.stageScene("startGame", { label: "Start Game"});
+	  });
+
+	 
+	  box.fit(20);
+
+	});
+
+	Q.scene('startGame',function(stage) {
+	  var box = stage.insert(new Q.UI.Container({
+	    x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
+	  }));
+	  
+	  var button = box.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
+	                                           label: "Play" }))         
+	  var label = box.insert(new Q.UI.Text({x:10, y: -10 - button.p.h, fill: "#CCCCCC",
+	                                        label: stage.options.label }));
+	  button.on("click",function() {
+	    Q.clearStages();
+	    Q.stageScene('level1');
+	  });
+
+	  Q.input.on("confirm",this,function(){
+	  	Q.clearStages();
+	    Q.stageScene('level1');
+	  });
+
+
+	});
+
+	Q.loadTMX("level2.tmx, mario_small.png, mario_small.json,goomba.png, goomba.json, bloopa.png, bloopa.json, princess.png, tiles.png", function(){
 
 		//Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
 		Q.sheet("mario","mario_small.png", { "tilew": 32, "tileh": 32,"sx": 0,"sy": 0}); 
 		// Or from a .json asset that defines sprite locations
 		Q.compileSheets("mario_small.png","mario_small.json");
 
-		Q.stageScene("level1");
+		Q.sheet("goomba","goomba.png", { "tilew": 32, "tileh": 32,"sx": 0,"sy": 0}); 
+		// Or from a .json asset that defines sprite locations
+		Q.compileSheets("goomba.png","goomba.json");
+
+		Q.sheet("bloopa","bloopa.png", { "tilew": 32, "tileh": 32,"sx": 0,"sy": 0}); 
+		// Or from a .json asset that defines sprite locations
+		Q.compileSheets("bloopa.png","bloopa.json");
+
+
+		Q.stageScene("startGame", { label: "Start Game"});
 
 
 	});
@@ -54,27 +106,9 @@ window.addEventListener("load",function() {
 				y: 380, // be overridden on object creation
 				frame: 0
 			});
-			// Add in pre-made components to get up and running quickly
-			// The `2d` component adds in default 2d collision detection
-			// and kinetics (velocity, gravity)
-			// The `platformerControls` makes the player controllable by the
-			// default input actions (left, right to move, up or action to jump)
-			// It also checks to make sure the player is on a horizontal surface before
-			// letting them jump.
 			this.add('2d, platformerControls, animation');
 
-			Q.input.on("fire");
-			// Wait until the firing animation has played until
-			// actually launching the bullet
-			// Write event handlers to respond hook into behaviors.
-			// hit.sprite is called everytime the player collides with a sprite
-			/*this.on("hit.sprite",function(collision) {
-			// Check the collision, if it's the Tower, you win!
-				if() {
-					Q.stageScene("endGame",1, { label: "You Lose!" });
-					this.destroy();
-				}
-			})*/
+			this.on("win_game","winGame");
 		},
 
 		step: function(dt) {
@@ -88,8 +122,110 @@ window.addEventListener("load",function() {
 					else
 						this.play("marioStand_left");
 				}
+				if(this.p.y > 600){
+					Q.stageScene("level1");
+				}
+		},
+
+		winGame: function(){
+			Q.stageScene("endGame",1, { label: "You Win" });
 		}
 	});
 
+	Q.Sprite.extend("Goomba",{
+		init: function(p){
+			this._super(p,{
+				sprite:"goomba",
+				sheet: "goomba",
+				x: 15*32,
+				y: 14*32,
+				vx: 100 
+			});
+
+			this.add('2d, aiBounce, animation');
+
+			this.on("bump.left,bump.right",function(collision) {
+				if(collision.obj.isA("Mario")) {
+					Q.stageScene("endGame",1, { label: "You Died" });
+					collision.obj.destroy();
+					//Q.stageScene("level1");
+				}
+			});
+
+			this.on("bump.top",function(collision) {
+				if(collision.obj.isA("Mario")) {
+					this.destroy();
+					//collision.obj.p.vy = -300; //se utiliza para que salte cuando muere
+				}
+			});
+		}
+	});
+
+
+	Q.Sprite.extend("Bloopa",{
+		init: function(p){
+			this._super(p,{
+				sprite:"bloopa",
+				sheet: "bloopa",
+				x: 200,
+				y: 14*32,
+				vy: -150
+			});
+			this.time = 0;
+			this.add('2d, animation');
+
+			this.on("bump.left,bump.right, bump.bottom",function(collision) {
+				if(collision.obj.isA("Mario")) {
+					Q.stageScene("endGame",1, { label: "You Died" });
+					collision.obj.destroy();
+					//Q.stageScene("level1");
+				}
+			});
+
+			this.on("bump.top",function(collision) {
+				if(collision.obj.isA("Mario")) {
+					this.destroy();
+					collision.obj.p.vy = -300;
+				}
+			});
+		},
+
+		step: function(dt) {
+			this.time += dt;
+			this.p.y += this.p.vy * dt;
+			if(this.p.vy == 0 && this.time >= 0.50){
+				this.p.vy = -150;
+				this.time = 0;
+			}
+		}
+	});
+
+
+	Q.Sprite.extend("Princess",{
+		init: function(p){
+			this._super(p,{
+				asset: "princess.png",
+				x: 220,
+				y: 14*32,
+				collision: false
+			});
+
+			this.add('2d, animation, tween');
+			console.log("princess");
+			this.on("hit.sprite",this,"hit");
+
+		},
+
+		hit: function(col) {
+			// Win the game
+			if(col.obj.isA("Mario") && !this.p.collision) {
+				this.p.collision = true;
+				col.obj.trigger('win_game');
+			}
+		}
+
+	});
+
+	
 
 });

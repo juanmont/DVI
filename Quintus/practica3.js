@@ -3,7 +3,7 @@ window.addEventListener("load",function() {
 	var Q = window.Q = Quintus().include("Sprites, Scenes, Input,UI, 2D, Touch, Anim, TMX")
 					.setup({ //maximize : true
 						width: 500, // Set the default width to 800 pixels
-						height: 600, // Set the default height to 600 pixels
+						height: 570, // Set the default height to 600 pixels
 					})
 					.controls().touch();
 
@@ -23,7 +23,7 @@ window.addEventListener("load",function() {
 			else
 				stage.insert(new Q.Coin({x: 420+inc, y: 490}));
 		}
-		stage.insert(new Q.Score());
+		
 		// Give the stage a moveable viewport and tell it
 		// to follow the player.
 		stage.add("viewport").follow(player);
@@ -43,6 +43,7 @@ window.addEventListener("load",function() {
 	                                           label: "Play Again" }))         
 	  var label = box.insert(new Q.UI.Text({x:10, y: -10 - button.p.h, 
 	                                        label: stage.options.label }));
+
 	  button.on("click",function() {
 	    Q.clearStages();
 	    Q.stageScene("startGame", { label: "Start Game"});
@@ -64,11 +65,13 @@ window.addEventListener("load",function() {
 	  button.on("click",function() {
 	    Q.clearStages();
 	    Q.stageScene('level1');
+	    Q.stageScene('HUD',3);
 	  });
 
 	  Q.input.on("confirm",this,function(){
 	  	Q.clearStages();
 	    Q.stageScene('level1');
+	    Q.stageScene('HUD',3);
 	  });
 
 
@@ -119,16 +122,16 @@ window.addEventListener("load",function() {
 				y: 380, // be overridden on object creation
 				frame: 0
 			});
-			this.add('2d, platformerControls, animation');
+			this.add('2d, platformerControls, animation, tween');
 
 			this.on("win_game","winGame");
 			this.on("destroy_mario",this,"destroyMario");
 		},
 
 		destroyMario: function(){
-			this.destroy();
+			this.animate({ x: this.p.x, y: this.p.y+200}, 1, Q.Easing.Linear, {delay:0, callback:this.destroy});
+			//this.destroy();
 		},
-
 		step: function(dt) {
 			if(this.p.animation != "marioDie"){
 				if(this.p.vx > 0) {
@@ -234,8 +237,8 @@ window.addEventListener("load",function() {
 			});
 
 			this.add('2d, animation, tween');
-			this.on("destroy_coin", this, "destoyCoin");
-			this.on("bump.left, bump.bottom, bump.right, bottom.top",function(collision) {
+			this.on("destroy_coin", this, "destroyCoin");
+			this.on("bump.left, bump.bottom, bump.right, bump.top",function(collision) {
 				if(collision.obj.isA("Mario")) {
 					this.animate({ x: this.p.x, y: this.p.y-100}, 0.2, Q.Easing.Linear, {delay:0, callback:this.destroyCoin});
 				}
@@ -261,9 +264,15 @@ window.addEventListener("load",function() {
 			});
 			Q.state.on("change.score",this,"score");
 		},
-		step: function(){
-			this.p.label = "score: " + Q.state.get("score");
+		score: function(score){
+			this.p.label = "score: " + score;
 		}
+	});
+
+	Q.scene("HUD", function(stage){
+		var box = stage.insert(new Q.UI.Container({ x: 20, y: 0 }));
+	    var label = box.insert(new Q.Score());
+	    box.fit(20);
 	});
 
 

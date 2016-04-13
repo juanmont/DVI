@@ -11,9 +11,9 @@ window.addEventListener("load",function() {
 		Q.stageTMX("level2.tmx",stage);
 		
 		var player = stage.insert(new Q.Mario());
-		stage.insert(new Q.Goomba({x: 15*32,y: 510,}));
-		stage.insert(new Q.Bloopa({x: 200,y: 510,}));
-		stage.insert(new Q.Piranha({x: 240,y: 510,}));
+		//stage.insert(new Q.Goomba({x: 15*32,y: 510,}));
+		//stage.insert(new Q.Bloopa({x: 200,y: 510,}));
+		//stage.insert(new Q.Piranha({x: 255,y: 510,}));
 		stage.insert(new Q.Princess());
 		var inc = 0;
 		for(i = 0; i <=10; i++){
@@ -57,7 +57,7 @@ window.addEventListener("load",function() {
 
 	Q.scene('startGame',function(stage) {
 	  var box = stage.insert(new Q.UI.Container({
-	    x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
+	    x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)", width: 500, height: 580
 	  }));
 	  
 	  var button = box.insert(new Q.UI.Button({ asset: "mainTitle.png"}))         
@@ -110,7 +110,7 @@ window.addEventListener("load",function() {
 	});
 
 	Q.animations('piranha',{
-		piranha_move: {frames: [0,1], rate: 1/2},
+		piranha_move: {frames: [0,1], rate: 1/2}
 	});
 
 	Q.animations('coin',{
@@ -125,7 +125,7 @@ window.addEventListener("load",function() {
 			this._super(p, {
 				sprite: "mario",
 				sheet: "mario", // Setting a sprite sheet sets sprite width and height
-				x: 150, // You can also set additional properties that can
+				x: 130*32, // You can also set additional properties that can
 				y: 380, // be overridden on object creation
 				gravity: 0.7,
 				frame: 0
@@ -137,7 +137,7 @@ window.addEventListener("load",function() {
 		},
 
 		destroyMario: function(){
-			this.del('platformerControls, 2d');
+			this.del('platformerControls');
 			Q.stageScene("endGame",1, { label: "You Died" });
 			this.animate({ x: this.p.x, y: this.p.y+200}, 1, Q.Easing.Linear, {delay:0, callback:this.destroy});
 			//this.destroy();
@@ -156,8 +156,14 @@ window.addEventListener("load",function() {
 						this.play('marioL');
 				} else {
 					if(this.p.direction == "right")
-						this.play("marioStand_right"); 
+						if(this.p.vy != 0)
+							this.play('marioJumpR');
+						else
+							this.play("marioStand_right"); 
 					else
+						if(this.p.vy != 0)
+							this.play('marioJumpL');
+						else
 						this.play("marioStand_left");
 				}
 				if(this.p.y > 600){
@@ -195,10 +201,12 @@ window.addEventListener("load",function() {
 			this._super(p,{
 				sprite:"piranha",
 				sheet: "piranha", 
+				vy:-100,
+				gravity:0.4
 			});
-			
-			this.add('2d, animation, defaultEnemy');
-			this.on("bump.top",function(collision){
+			this.time = 0;
+			this.add('2d, animation');
+			this.on("bump.top,bump.left,bump.right, bump.bottom",function(collision){
 				if(collision.obj.isA("Mario")) {
 					collision.obj.play("marioDie");
 					//Q.stageScene("level1");
@@ -206,6 +214,15 @@ window.addEventListener("load",function() {
 			});
 			this.play('piranha_move');
 		},
+
+		step: function(dt) {
+			this.time += dt;
+			this.p.y += this.p.vy * dt;
+			if(this.p.vy == 0 && this.time >= 1.00){
+				this.p.vy = -100;
+				this.time = 0;
+			}
+		}
 	});
 
 
@@ -231,7 +248,7 @@ window.addEventListener("load",function() {
 			this.time += dt;
 			this.p.y += this.p.vy * dt;
 			if(this.p.vy == 0 && this.time >= 0.50){
-				this.p.vy = -150;
+				this.p.vy = -200;
 				this.time = 0;
 			}
 		}
@@ -242,7 +259,7 @@ window.addEventListener("load",function() {
 		init: function(p){
 			this._super(p,{
 				asset: "princess.png",
-				x: 95*32,
+				x: 145*32,
 				y: 180,
 				collision: false
 			});
@@ -316,8 +333,6 @@ window.addEventListener("load",function() {
 
 	Q.component("defaultEnemy", {
 		added: function() {
-
-
 		var self = this;
 
 		this.entity.on("bump.top", function(collision){
@@ -329,9 +344,7 @@ window.addEventListener("load",function() {
 
 		this.entity.on("bump.left,bump.right, bump.bottom",function(collision) {
 				if(collision.obj.isA("Mario")) {
-					
 					collision.obj.play("marioDie");
-					//Q.stageScene("level1");
 				}
 		});
 

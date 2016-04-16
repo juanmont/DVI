@@ -11,9 +11,48 @@ window.addEventListener("load",function() {
 		Q.stageTMX("level2.tmx",stage);
 		
 		var player = stage.insert(new Q.Mario());
-		//stage.insert(new Q.Goomba({x: 15*32,y: 510,}));
-		//stage.insert(new Q.Bloopa({x: 200,y: 510,}));
-		//stage.insert(new Q.Piranha({x: 255,y: 510,}));
+		stage.insert(new Q.Goomba({x: 15*32,y: 510,}));
+		stage.insert(new Q.Goomba({x: 1149,y: 510,}));
+		stage.insert(new Q.Goomba({x: 1634,y: 510,}));
+		stage.insert(new Q.Goomba({x: 3600,y: 510,}));
+		stage.insert(new Q.Goomba({x: 4125,y: 510,}));
+
+		
+		stage.insert(new Q.Bloopa({x: 900,y: 510,}));
+		stage.insert(new Q.Bloopa({x: 1500,y: 510,}));
+		stage.insert(new Q.Bloopa({x: 2325,y: 510,}));
+		stage.insert(new Q.Bloopa({x: 3962,y: 510,}));
+		stage.insert(new Q.Bloopa({x: 2500,y: 510,}));
+
+		stage.insert(new Q.Piranha({x: 1000,y: 510,}));
+		stage.insert(new Q.Piranha({x: 700,y: 510,}));
+		stage.insert(new Q.Piranha({x: 1800,y: 510,}));
+		stage.insert(new Q.Piranha({x: 3210,y: 510,}));
+		stage.insert(new Q.Princess());
+		var inc = 0;
+		for(i = 0; i <=10; i++){
+			inc +=30;
+			if(i%2==0){
+				stage.insert(new Q.Coin({x: 420+inc, y: 470}));
+			}
+			else
+				stage.insert(new Q.Coin({x: 420+inc, y: 490}));
+		}
+		
+		// Give the stage a moveable viewport and tell it
+		// to follow the player.
+		stage.add("viewport").follow(player, {x:true, y:false});
+		stage.viewport.offsetX = -10;
+		stage.viewport.offsetY = 200;
+		Q.state.reset({ score: 0});
+		
+
+	});
+
+	Q.scene("level2", function(stage){
+		Q.stageTMX("level3.tmx",stage);
+		
+		var player = stage.insert(new Q.Mario());
 		stage.insert(new Q.Princess());
 		var inc = 0;
 		for(i = 0; i <=10; i++){
@@ -125,9 +164,9 @@ window.addEventListener("load",function() {
 			this._super(p, {
 				sprite: "mario",
 				sheet: "mario", // Setting a sprite sheet sets sprite width and height
-				x: 130*32, // You can also set additional properties that can
+				x: 200, // You can also set additional properties that can
 				y: 380, // be overridden on object creation
-				gravity: 0.7,
+				gravity: 0.6,
 				frame: 0
 			});
 			this.add('2d, platformerControls, animation, tween');
@@ -169,12 +208,23 @@ window.addEventListener("load",function() {
 				if(this.p.y > 600){
 					this.destroyMario();
 				}
+				/*if(this.p.x > 4623){
+					this.nextLevel();
+				}*/
 			}
+			console.log(this.p.x);
 		},
 
 		winGame: function(){
 			this.del('platformerControls');
 			Q.stageScene("endGame",1, { label: "You Win" });
+		},
+
+		nextLevel: function(){
+			this.del('platformerControls');
+			Q.clearStages();
+	    	Q.stageScene('level1');
+	    	Q.stageScene('HUD',3);
 		}
 	});
 
@@ -201,7 +251,7 @@ window.addEventListener("load",function() {
 			this._super(p,{
 				sprite:"piranha",
 				sheet: "piranha", 
-				vy:-100,
+				//vy:-100,
 				gravity:0.4
 			});
 			this.time = 0;
@@ -213,16 +263,16 @@ window.addEventListener("load",function() {
 				}
 			});
 			this.play('piranha_move');
-		},
+		}
 
-		step: function(dt) {
+		/*step: function(dt) {
 			this.time += dt;
 			this.p.y += this.p.vy * dt;
 			if(this.p.vy == 0 && this.time >= 1.00){
 				this.p.vy = -100;
 				this.time = 0;
 			}
-		}
+		}*/
 	});
 
 
@@ -259,13 +309,13 @@ window.addEventListener("load",function() {
 		init: function(p){
 			this._super(p,{
 				asset: "princess.png",
-				x: 145*32,
-				y: 180,
+				x: 4623,
+				y: 510,
 				collision: false
 			});
 
 			this.add('2d, animation, tween');
-			console.log("princess");
+			
 			this.on("hit.sprite",this,"hit");
 
 		},
@@ -287,7 +337,8 @@ window.addEventListener("load",function() {
 				sprite: "coin",
 				sheet: "coin",
 				gravity: 0,
-				tocado: false
+				tocado: false,
+				sensor:true
 			});
 
 			this.add('animation, tween');
